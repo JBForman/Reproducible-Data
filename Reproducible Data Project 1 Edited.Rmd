@@ -1,0 +1,86 @@
+---
+title: "Reproducible Data Project 1"
+author: "Dorie"
+date: "June 24, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Reproducible Data Project 1
+## Loading and Proccessing Data
+
+```{r}
+data <- read.csv("activity.csv")
+```
+# What is the mean total number of steps taken per day?
+# Calculate the total number of steps taken by day and make a histogram of the total number of steps:
+
+```{r}
+stepsbyday <- aggregate(steps ~ date, data, sum)
+hist(stepsbyday$steps, main = paste("Total Steps by Day"), col= "red", xlab= "Number of Steps")
+```
+#Calculate the mean and median of the total number of steps taken per day
+
+```{r}
+mean(stepsbyday$steps)
+median(stepsbyday$steps)
+```
+
+# What is the average daily activity pattern?
+
+```{r}
+averagenumberofsteps <- aggregate(steps ~ interval, data, mean)
+```
+#Make a time series plot
+
+```{r}
+library("ggplot2")
+ggplot(data=averagenumberofsteps, aes(x=interval, y=steps)) +
+  geom_line() +
+  xlab("5 Minute Intervals") +
+  ylab("Average Number of Steps Taken")
+```
+
+#Which 5 minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+
+```{r}
+averagenumberofsteps[which.max(averagenumberofsteps$steps),]
+```
+# Imputing Missing Values
+##Calculate and report the total number of missing values in the dataset:
+
+```{r}
+sum(is.na(data$steps))
+```
+##Fill in all of the missing values in the dataset and create a new dataset that is equal to the original dataset but with missing values filled in:
+
+```{r}
+alldata <- data
+nas <- is.na(alldata$steps)
+avg_interval <- tapply(alldata$steps, alldata$interval, mean, na.rm=TRUE, simplify=TRUE)
+alldata$steps[nas] <- avg_interval[as.character(alldata$interval[nas])]
+
+sum(is.na(alldata$steps))
+
+incomplete <- sum(!complete.cases(data))
+imputed_data <- transform(data, steps = ifelse(is.na(data$steps),averagenumberofsteps$steps[match(data$interval, averagenumberofsteps$interval)], data$steps))
+
+allstepsbyday <- aggregate(steps ~ date,imputed_data, sum)
+
+
+ggplot(allstepsbyday, aes(x = steps)) +
+  geom_histogram(fill = "red", binwidth = 1000) +
+  labs(title = "Histogram of All Steps per Day", x = "Steps per Day", y = "Frequency")
+```
+##Calculate the new mean and median for imputed data:
+
+```{r}
+mean(allstepsbyday$steps)
+median(allstepsbyday$steps)
+```
+
+
+
